@@ -1,7 +1,5 @@
 import numpy as np
 import math
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 #from scipy import sparse
 
 class ConvLayer:
@@ -28,6 +26,9 @@ class ConvLayer:
         self.convMatrix = np.zeros((((self.fStepsOneAxis) ** 2) * self.filterAmount, self.inputSize*channels))
         self.createConvMatrix()
 
+    def updateInput(self,input):
+        self.input = input
+
     def createConvMatrix(self):
         filterSizeX = int(math.sqrt(self.filterSize))
         inputSizeX = int(math.sqrt(self.inputSize))
@@ -43,9 +44,24 @@ class ConvLayer:
                 temp[y:filterSizeX+y,x:filterSizeX+x] = f
                 temp.shape = (1,self.inputSize)
                 self.convMatrix[step+filter*allSteps,0:self.inputSize] = temp
+
         temp = self.convMatrix[0:filter*allSteps,0:self.inputSize]
         for channel in range(self.channels):
             self.convMatrix[0:filter*allSteps,channel*self.inputSize:(channel+1)*self.inputSize] = temp
+
+    def readFilter(self):
+        filterSizeX = int(math.sqrt(self.filterSize))
+        inputSizeX = int(math.sqrt(self.inputSize))
+        allSteps = self.fStepsOneAxis ** 2
+        for f in range(self.filterAmount):
+            self.filter[0]
+            tempFilter = 0
+            for step in range(allSteps):
+                x = step % self.fStepsOneAxis
+                y = int(step / self.fStepsOneAxis)
+                tempMx = self.convMatrix[allSteps*f+step].reshape(inputSizeX,inputSizeX,self.channels)
+                tempFilter = np.add(tempFilter,tempMx[y:filterSizeX+y,x:filterSizeX+x,0])
+            self.filter[f] = tempFilter.reshape(1,self.filterSize)
 
     def convolution(self, convMatrix, input):
         return np.dot(convMatrix,input)
@@ -66,43 +82,3 @@ class ConvLayer:
         temp = np.subtract(self.input.T, self.reconstr.T)
         self.convMatrix = np.add(self.convMatrix, self.lernRate * np.dot(self.featureMaps.T,temp))
 
-img=mpimg.imread('stardestroyer32x32.png')
-img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
-fig = plt.figure(figsize=(10, 10))
-
-#filterSize, filterAmount, stride, learnRate
-CAE = ConvLayer(9,9,1,0.000001)
-CAE.setInput(img,3)
-
-for i in range(100):
-    if i%25 == 0:
-        print(i)
-        fig.clear()
-        for i in range(CAE.filterAmount):
-            learned = CAE.featureMaps.T
-            learned = learned[i*900:(i+1)*900]
-            learned = learned.reshape(30, 30)
-            fig.add_subplot(1, 9, i + 1)
-            plt.axis('off')
-            plt.imshow(learned, interpolation='None')
-
-        for i in range(CAE.channels):
-            fig.add_subplot(3, 3, i+1)
-            real = CAE.input[i*CAE.inputSize:(i+1)*CAE.inputSize]
-            real = real.reshape(32, 32)
-            plt.axis('off')
-            plt.imshow(real, interpolation='None')
-
-        for i in range(CAE.channels):
-            fig.add_subplot(3, 3, i+7)
-            real = CAE.reconstr[i*CAE.inputSize:(i+1)*CAE.inputSize]
-            real = real.reshape(32, 32)
-            plt.axis('off')
-            plt.imshow(real, interpolation='None')
-        plt.draw()
-        plt.pause(0.0001)
-
-    CAE.forwardActivation()
-    CAE.backwardsActivation()
-    CAE.contrastiveDivergence()
-plt.show()
