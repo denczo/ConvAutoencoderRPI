@@ -22,20 +22,24 @@ for i in range(amountData):
     temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99) + 0.01
     dataBatch[i] = temp
 
-img=mpimg.imread('images/XWing32x32.png')
+img=mpimg.imread('images/mnistzahl.png')
 img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
 
 #filterSize, filterAmount, stride, learnRate
 CAE = ConvLayer(9, 5, 1, 0.0001)
-CAE.setInput(img,3)
+#CAE.setInput(img,3)
+CAE.setInput(dataBatch[0],1)
+
+
+
 fmSize = CAE.fStepsOneAxis ** 2
 fig = plt.figure(figsize=(8, 8))
 
 
 for i in range(500):
-    #CAE.updateInput(dataBatch[i])
+    CAE.updateInput(dataBatch[i])
 
-    if i%499 == 0:
+    if i%25 == 0:
         fig.clear
         print(i)
 
@@ -58,14 +62,14 @@ for i in range(500):
         for i in range(CAE.channels):
             fig.add_subplot(5, 5, 2+i + 1)
             real = CAE.input[i * CAE.inputSize:(i + 1) * CAE.inputSize]
-            real = real.reshape(32, 32)
+            real = real.reshape(28, 28)
             plt.axis('off')
             plt.imshow(real, interpolation='None')
 
         for i in range(CAE.channels):
             fig.add_subplot(5, 5, 18+i)
             real = CAE.reconstr[i * CAE.inputSize:(i + 1) * CAE.inputSize]
-            real = real.reshape(32, 32)
+            real = real.reshape(28, 28)
             plt.axis('off')
             plt.imshow(real, interpolation='None')
         CAE.readFilter()
