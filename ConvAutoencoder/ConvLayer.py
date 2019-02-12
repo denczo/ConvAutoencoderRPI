@@ -1,6 +1,6 @@
 import numpy as np
 import math
-#from scipy import sparse
+from scipy.sparse import csr_matrix
 
 class ConvLayer:
 
@@ -20,9 +20,10 @@ class ConvLayer:
         self.channels = channels
         self.reconstr = np.zeros(self.inputSize*3)
         # how many steps filter can slide in X or Y direction over image
-        self.fStepsOneAxis = int((math.sqrt(self.inputSize) - math.sqrt(self.filterSize)) / self.stride) + 1
+        self.fStepsOneAxis = int(((math.sqrt(self.inputSize) - math.sqrt(self.filterSize)) + 1) / self.stride)
         self.featureMaps = np.zeros((self.filterAmount * (self.fStepsOneAxis) ** 2))
         self.featureMaps.shape = (1, len(self.featureMaps))
+        print((((self.fStepsOneAxis) ** 2) * self.filterAmount)*self.inputSize*channels)
         self.convMatrix = np.zeros((((self.fStepsOneAxis) ** 2) * self.filterAmount, self.inputSize*channels))
         self.createConvMatrix()
 
@@ -45,16 +46,16 @@ class ConvLayer:
                 temp.shape = (1,self.inputSize)
                 self.convMatrix[step+filter*allSteps,0:self.inputSize] = temp
 
-        temp = self.convMatrix[0:filter*allSteps,0:self.inputSize]
-        for channel in range(self.channels):
-            self.convMatrix[0:filter*allSteps,channel*self.inputSize:(channel+1)*self.inputSize] = temp
+            #temp = self.convMatrix[0:filter*allSteps,0:self.inputSize]
+            #for channel in range(self.channels):
+             #   self.convMatrix[0:filter*allSteps,channel*self.inputSize:(channel+1)*self.inputSize] = temp
 
     def readFilter(self):
         filterSizeX = int(math.sqrt(self.filterSize))
         inputSizeX = int(math.sqrt(self.inputSize))
         allSteps = self.fStepsOneAxis ** 2
         for f in range(self.filterAmount):
-            self.filter[0]
+            #self.filter[0]
             tempFilter = 0
             for step in range(allSteps):
                 x = step % self.fStepsOneAxis
@@ -64,14 +65,22 @@ class ConvLayer:
             self.filter[f] = tempFilter.reshape(1,self.filterSize)
 
     def convolution(self, convMatrix, input):
-        return np.dot(convMatrix,input)
+        #print(input.shape)
+        #print(csr_matrix(input))
+        #print(np.dot(convMatrix,input).shape)
+        compr = csr_matrix(convMatrix).dot(input)
+        return compr
 
     #it's a transposed convolution, not a mathematical deconvolution
     def deconvolution(self, convMatrix, featureMap):
-        return np.dot(convMatrix.T,featureMap.T)
+        compr = csr_matrix(convMatrix.T).dot(featureMap.T)
+
+        return compr
 
     def forwardActivation(self):
         temp = self.convolution(self.convMatrix,self.input)
+        #print(temp.shape)
+        #print(self.featureMaps.shape)
         self.featureMaps = self.reLu(np.add(self.featureMaps,temp))
 
     def backwardsActivation(self):
@@ -80,5 +89,7 @@ class ConvLayer:
 
     def contrastiveDivergence(self):
         temp = np.subtract(self.input.T, self.reconstr.T)
-        self.convMatrix = np.add(self.convMatrix, self.lernRate * np.dot(self.featureMaps.T,temp))
+        compr = csr_matrix(self.featureMaps.T).dot(csr_matrix(temp))
+        #print(compr.size,self.convMatrix.size)
+        self.convMatrix = np.add(self.convMatrix, self.lernRate * compr.toarray())
 
