@@ -1,4 +1,3 @@
-from ConvAutoencoder.ConvLayer import ConvLayer
 from ConvAutoencoder.ConvLayerLight import ConvLayerLight
 from ConvAutoencoder.Visualizer import Viz
 
@@ -33,13 +32,13 @@ CAEL = ConvLayerLight(dataBatch[0],9, 9, 1, 0.01)
 fmSize = CAEL.fStepsOneAxis ** 2
 
 imSizeX = int(math.sqrt(CAEL.inputSize))
-VIS = Viz(10,10,9,fmSize,3,CAEL.fStepsOneAxis)
+VIS = Viz(5,9,9,fmSize,3,CAEL.fStepsOneAxis)
 
 for i in range(10000):
     CAEL.updateInput(dataBatch[i])
     CAEL.slide()
 
-    if i%100 == 0:
+    if i%50 == 0:
         CAEL.createConvMatrix()
         print(i)
         VIS.setInputs(CAEL.input,CAEL.filter,CAEL.featureMaps,CAEL.recon,1)
