@@ -19,28 +19,29 @@ for i in range(amountData):
     temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99)
     dataBatch[i] = temp
 
-img=mpimg.imread('images/stardestroyer32x32.png')
-#img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
-
-#filterSize, filterAmount, stride, learnRate
-#CAE = ConvLayer(9, 5, 3, 0.0001)
-#CAE.setInput(img,3)
-#CAE.setInput(dataBatch[0],1)
-#print(img[:,:,:1].shape)
+img=mpimg.imread('images/awing32x32.png')
+img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
 #CAEL = ConvLayerLight(img[:,:,:1].flatten(),9, 5, 1, 0.001)
-CAEL = ConvLayerLight(dataBatch[0],9, 9, 1, 0.01)
+
+#input, channels, filterSize, filterAmount, stride, learnRate
+channels = 3
+filterAmount = 8
+CAEL = ConvLayerLight(img,channels, 9, filterAmount, 1, 0.01)
+#CAEL = ConvLayerLight(dataBatch[0],channels, 9, filterAmount, 1, 0.001)
 fmSize = CAEL.fStepsOneAxis ** 2
 
 imSizeX = int(math.sqrt(CAEL.inputSize))
-VIS = Viz(5,9,9,fmSize,3,CAEL.fStepsOneAxis)
+VIS = Viz(5,9,filterAmount,fmSize,3,CAEL.fStepsOneAxis)
+CAEL.setBiasVisible(1)
+CAEL.setBiasesFMs([0.25,0.5,0.25,0.2,0.25,0.1,0.3,0.4])
 
 for i in range(10000):
-    CAEL.updateInput(dataBatch[i])
+    #CAEL.updateInput(dataBatch[i])
     CAEL.slide()
 
-    if i%50 == 0:
+    if i%500 == 0:
         CAEL.createConvMatrix()
         print(i)
-        VIS.setInputs(CAEL.input,CAEL.filter,CAEL.featureMaps,CAEL.recon,1)
+        VIS.setInputs(CAEL.input,CAEL.filter,CAEL.featureMaps,CAEL.recon,channels)
         VIS.visualizeNet()
 
