@@ -21,6 +21,7 @@ class ConvLayerLight:
         self.reLu = lambda x: x * (x > 0)
         self.biasV = 0
         self.biasFMs = np.zeros(filterAmount)
+        self.featureMaps = np.zeros((self.filterAmount, self.fStepsOneAxis ** 2))
 
     def updateInput(self,input):
         self.input = input
@@ -57,51 +58,4 @@ class ConvLayerLight:
             self.forwardActivation(cutout)
             self.backwardActivation()
             self.contrastiveDivergence(cutout)
-
-
-    #TODO need to be more efficient for raspberry zero
-    def createFeatureMaps(self):
-        fSizeAxis = int(math.sqrt(self.filterSize))
-        self.convMatrix = np.zeros(((self.fStepsOneAxis ** 2) * self.filterAmount, self.inputSize*self.channels))
-        self.featureMaps = np.zeros((self.filterAmount * self.fStepsOneAxis ** 2))
-        self.featureMaps.shape = (1, len(self.featureMaps))
-
-        for filter in range(self.filterAmount):
-            f = self.filter[filter]
-            f.shape = (fSizeAxis, fSizeAxis, self.channels)
-            for step in range(self.allFSteps):
-                x = step % self.fStepsOneAxis
-                y = int(step / self.fStepsOneAxis)
-
-                temp = np.zeros((self.axisLength, self.axisLength, self.channels))
-                #part of matrix as big as the filter
-                temp[y:fSizeAxis + y, x:fSizeAxis + x, :] = f
-                temp.shape = (1, self.axisLength ** 2 * self.channels)
-                print(temp.shape, self.convMatrix.shape)
-                self.convMatrix[step + filter * self.allFSteps, 0:self.axisLength ** 2 * self.channels] = temp
-                print(self.convMatrix.shape)
-
-    def createConvMatrix(self):
-
-        filterSizeX = int(math.sqrt(self.filterSize))
-        inputSizeX = self.axisLength
-        allSteps = self.fStepsOneAxis ** 2
-        self.convMatrix = np.zeros((((self.fStepsOneAxis) ** 2) * self.filterAmount, self.inputSize*self.channels))
-        self.featureMaps = np.zeros((self.filterAmount * self.fStepsOneAxis ** 2))
-        self.featureMaps.shape = (1, len(self.featureMaps))
-        self.recon = np.zeros(self.inputSize)
-
-        for filter in range(self.filterAmount):
-            f = self.filter[filter]
-            f.shape = (filterSizeX,filterSizeX,self.channels)
-            for step in range(allSteps):
-                x = step % self.fStepsOneAxis
-                y = int(step / self.fStepsOneAxis)
-                temp = np.zeros((inputSizeX,inputSizeX,self.channels))
-                temp[y:filterSizeX+y,x:filterSizeX+x,:] = f
-                temp.shape = (1,self.axisLength**2*self.channels)
-                #print(temp.shape,self.convMatrix.shape)
-                self.convMatrix[step+filter*allSteps,0:self.axisLength**2*self.channels] = temp
-
-        self.featureMaps = self.reLu(np.add(self.featureMaps,np.dot(self.convMatrix,self.input)))
-        self.recon = self.reLu(np.dot(self.convMatrix.T,self.featureMaps.T))
+            self.featureMaps[:,step] = self.hidden.T

@@ -3,6 +3,7 @@ import math
 plt.rcParams['toolbar'] = 'None'
 import numpy as np
 
+#ONLY FOR SINGLE LAYER
 class Viz:
 
     elementsY = 4
@@ -77,6 +78,6 @@ class Viz:
         self.showInput(self.input,Viz.rowInput)
         self.showFilter()
         self.showFMs()
-        self.showInput(self.recon,Viz.rowRecon)
+        #self.showInput(self.recon,Viz.rowRecon)
         plt.draw()
         plt.pause(0.0001)
