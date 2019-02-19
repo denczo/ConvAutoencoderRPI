@@ -22,7 +22,7 @@ class Viz:
         self.fSizeAxis = fSizeAxis
         self.fStepsAxis = fStepsAxis
 
-    def setInputs(self, input, filter, fms, recon, channels):
+    def setInputs(self, input, filter, fms, recon, channels, foo):
         self.channels = channels
         self.inputSize = int(len(input)/channels)
         self.imSizeAxis = int(math.sqrt(self.inputSize))
@@ -30,7 +30,9 @@ class Viz:
         self.filter = filter
         self.fms = fms
         self.recon = recon
+        self.foo = foo
 
+    #only for first Layer
     def showFilter(self):
         for i in range(self.fAmount):
             self.fig.add_subplot(Viz.elementsY,self.fAmount,Viz.rowFilter*self.fAmount+i +1)
@@ -47,6 +49,28 @@ class Viz:
             if i < 1:
                 plt.ylabel('Filter',rotation = Viz.rot,fontsize=Viz.fontSize)
 
+    def showFonInput(self):
+        self.fig.add_subplot(Viz.elementsY, self.fAmount, 1)
+        #data = self.fms.T
+        #data = data[i * self.fmSize:(i + 1) * self.fmSize]
+        #data = data.reshape(self.fStepsAxis, self.fStepsAxis)
+        plt.imshow(self.foo, interpolation='None')
+        plt.xticks([])
+        plt.yticks([])
+        l = plt.ylabel('Filter On Input', rotation=Viz.rot, fontsize=Viz.fontSize)
+
+
+    def showFeatures(self, featureMaps, filter):
+        for i in range(self.fAmount):
+            self.fig.add_subplot(Viz.elementsY, self.fAmount, Viz.rowFMs * self.fAmount + i + 1)
+            data = self.fms.T
+            data = data[i * self.fmSize:(i + 1) * self.fmSize]
+            data = data.reshape(self.fStepsAxis, self.fStepsAxis)
+            plt.imshow(data, interpolation='None')
+            plt.xticks([])
+            plt.yticks([])
+            if i < 1:
+                l = plt.ylabel('Features ', rotation=Viz.rot, fontsize=Viz.fontSize)
 
     def showFMs(self):
         for i in range(self.fAmount):
@@ -78,6 +102,7 @@ class Viz:
         self.showInput(self.input,Viz.rowInput)
         self.showFilter()
         self.showFMs()
+        #self.showFonInput()
         #self.showInput(self.recon,Viz.rowRecon)
         plt.draw()
         plt.pause(0.0001)

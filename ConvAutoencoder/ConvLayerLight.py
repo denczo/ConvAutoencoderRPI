@@ -45,7 +45,7 @@ class ConvLayerLight:
         self.filter = np.add(self.filter, self.lernRate*np.dot(self.hidden,temp.T))
 
     #slide all filter over the entire image with given stride and computes convolution
-    def slide(self):
+    def slide(self,trainig):
         inputR = self.input.reshape(self.axisLength,self.axisLength,self.channels)
         #temp = self.input.reshape(self.axisLength,self.axisLength)
         filterSizeX = int(math.sqrt(self.filterSize))
@@ -57,5 +57,21 @@ class ConvLayerLight:
             cutout = cutout.reshape(self.filterSize*self.channels,1)
             self.forwardActivation(cutout)
             self.backwardActivation()
-            self.contrastiveDivergence(cutout)
+            if trainig:
+                self.contrastiveDivergence(cutout)
             self.featureMaps[:,step] = self.hidden.T
+
+    #TODO does not work for multiple channels
+    def slideDeconv(self, featureMap, filterT):
+        #fmR = featureMap.reshape(self.fStepsOneAxis, self.fStepsOneAxis)
+        #filterT = filterT[:,:,:1]
+        #filterT.shape = (3,3)
+        filterSizeX = int(math.sqrt(self.filterSize))
+        fOnInput = np.zeros((self.axisLength,self.axisLength))
+        for step in range(self.allFSteps - 1):
+            x = (step + self.stride) % self.fStepsOneAxis
+            y = int((step + self.stride) / self.fStepsOneAxis)
+            temp = self.reLu(np.dot(featureMap[step],filterT))
+            temp = temp.reshape(filterSizeX,filterSizeX)
+            fOnInput[y:filterSizeX+y,x:filterSizeX+x] = temp
+        return fOnInput

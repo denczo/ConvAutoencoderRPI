@@ -1,10 +1,7 @@
 from ConvAutoencoder.ConvLayerLight import ConvLayerLight
 from ConvAutoencoder.Visualizer import Viz
-
 import numpy as np
-import matplotlib.image as mpimg
 import math
-import matplotlib.pyplot as plt
 
 training_data_file = open("C:/Users/Dennis/Documents/studium/mnist_train.csv",'r')
 data = training_data_file.readlines()
@@ -20,46 +17,81 @@ for i in range(amountData):
     temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99)
     dataBatch[i] = temp
 
-äimg=mpimg.imread('images/awing32x32.png')
-img=mpimg.imread('images/stardestroyer128x128.png')
+def vizLayer(cl,height,width):
+    fSizeAxis = int(math.sqrt(cl.filterSize))
+    fmSize = cl.fStepsOneAxis ** 2
+    viz = Viz(height,width,filterAmount,fmSize,fSizeAxis,cl.fStepsOneAxis)
+    return viz
 
-img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
+
+#img=mpimg.imread('images/stardestroyer128x128.png')
+
+#img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
 #CAEL = ConvLayerLight(img[:,:,:1].flatten(),9, 5, 1, 0.001)
 
-#input, channels, filterSize, filterAmount, stride, learnRate
-channels = 3
+channels = 1
 filterAmount = 9
-#biasesFM = [0.25,0.5,0.25,0.2,0.25,0.1,0.1,0.1,0.1]
-biasesFM = [0.0]*9
-CAEL = ConvLayerLight(img,channels, 9, filterAmount, 2, 0.01)
-#CAEL = ConvLayerLight(dataBatch[0],channels, 9, filterAmount, 1, 0.0001)
-CAEL.setBiasVisible(0)
-CAEL.setBiasesFMs(biasesFM)
-fmSize = CAEL.fStepsOneAxis ** 2
-imSizeX = int(math.sqrt(CAEL.inputSize))
+#CAEL = ConvLayerLight(img,channels, 9, filterAmount, 3, 0.001)
 
-VIS = Viz(5,9,filterAmount,fmSize,3,CAEL.fStepsOneAxis)
-for i in range(1000):
-    #CAEL.updateInput(dataBatch[i])
-    CAEL.slide()
+#input, channels, filterSize, filterAmount, stride, learnRate
+CL1 = ConvLayerLight(dataBatch[0],channels, 9, filterAmount, 1, 0.01)
+Viz1 = vizLayer(CL1,5,9)
+
+
+
+
+for i in range(98):
+    CL1.updateInput(dataBatch[i])
+    if i < 100:
+        CL1.slide(True)
+    else:
+        CL1.slide(False)
+
+    if i%25 == 0:
+        #fm = CL1.featureMaps[0,:]
+        #filterT = CL1.filter[4,:].reshape(3,3)
+        #filterT = filterT.T
+        #fonInput = CL1.slideDeconv(fm,filterT)
+        print(i)
+        Viz1.setInputs(CL1.input,CL1.filter,CL1.featureMaps.flatten(),None,channels,None)
+        Viz1.visualizeNet()
+
+
+CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 9, 2, 0.001)
+Viz2 = vizLayer(CL2,10,18)
+for i in range(105):
+    CL1.updateInput(dataBatch[i])
+    CL1.slide(False)
+
+    CL2.updateInput(CL1.featureMaps.flatten())
+    if i < 100:
+        CL2.slide(True)
+    else:
+        CL2.slide(False)
 
     if i%25 == 0:
         print(i)
-        VIS.setInputs(CAEL.input,CAEL.filter,CAEL.featureMaps.flatten(),None,channels)
-        VIS.visualizeNet()
+        Viz2.setInputs(CL2.input,CL2.filter,CL2.featureMaps.flatten(),None,CL1.filterAmount, None)
+        Viz2.visualizeNet()
 
-CAEL2 = ConvLayerLight(CAEL.featureMaps.flatten(),CAEL.filterAmount, 9, 9, 1, 0.01)
-CAEL2.setBiasVisible(0.2)
-CAEL2.setBiasesFMs([0.25,0.5,0.25,0.2,0.25,0.1,0.3,0.4,0.1])
-fmSize = CAEL2.fStepsOneAxis ** 2
-imSizeX = int(math.sqrt(CAEL2.inputSize))
-VIS2 = Viz(10,18,9,fmSize,3,CAEL2.fStepsOneAxis)
 
-for i in range(100):
-    #CAEL.updateInput(dataBatch[i])
-    CAEL2.slide()
+CL3 = ConvLayerLight(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 9, 2, 0.001)
+Viz3 = vizLayer(CL3,10,18)
+
+for i in range(500):
+    CL1.updateInput(dataBatch[i])
+    CL1.slide(False)
+    CL2.updateInput(CL1.featureMaps.flatten())
+    CL2.slide(False)
+    CL3.updateInput(CL2.featureMaps.flatten())
+
+    if i < 500:
+        CL3.slide(True)
+    else:
+        CL3.slide(False)
 
     if i%25 == 0:
         print(i)
-        VIS2.setInputs(CAEL2.input,CAEL2.filter,CAEL2.featureMaps.flatten(),None,CAEL.filterAmount)
-        VIS2.visualizeNet()
+        Viz3.setInputs(CL3.input,CL3.filter,CL3.featureMaps.flatten(),None,CL2.filterAmount, None)
+        Viz3.visualizeNet()
+
