@@ -14,7 +14,8 @@ class ConvLayerLight:
         self.channels = channels
         self.inputSize = int(len(input)/channels)
         self.axisLength = int(math.sqrt(self.inputSize))
-        self.reconstr = np.zeros(filterSize)
+        self.reconstrFilter = np.zeros(filterSize)
+        self.reconstrInput = np.zeros(self.inputSize*channels)
         self.hidden = np.zeros(filterAmount)
         self.fStepsOneAxis = int(((self.axisLength - math.sqrt(self.filterSize))) / self.stride + 1)
         self.allFSteps = self.fStepsOneAxis**2
@@ -36,18 +37,18 @@ class ConvLayerLight:
     def forwardActivation(self,cutout):
         self.hidden = self.reLu(np.dot(self.filter,cutout) + self.biasV)
 
-    def backwardActivation(self):
+    def backwardActivation(self,filter):
         temp = np.add(self.hidden.T,self.biasFMs)
-        self.reconstr = self.reLu(np.dot(self.filter.T,temp.T))
+        self.reconstrFilter = self.reLu(np.dot(filter.T,temp.T))
 
     def contrastiveDivergence(self,cutout):
-        temp = np.subtract(cutout,self.reconstr)
+        temp = np.subtract(cutout,self.reconstrFilter)
         self.filter = np.add(self.filter, self.lernRate*np.dot(self.hidden,temp.T))
 
     #slide all filter over the entire image with given stride and computes convolution
-    def slide(self,trainig):
+    def slide(self,trainig,observe):
         inputR = self.input.reshape(self.axisLength,self.axisLength,self.channels)
-        #temp = self.input.reshape(self.axisLength,self.axisLength)
+        reconstrR = self.reconstrInput.reshape(self.axisLength,self.axisLength,self.channels)
         filterSizeX = int(math.sqrt(self.filterSize))
 
         for step in range(self.allFSteps-1):
@@ -56,22 +57,23 @@ class ConvLayerLight:
             cutout = inputR[y:filterSizeX+y,x:filterSizeX+x,:]
             cutout = cutout.reshape(self.filterSize*self.channels,1)
             self.forwardActivation(cutout)
-            self.backwardActivation()
+            self.backwardActivation(self.filter)
             if trainig:
                 self.contrastiveDivergence(cutout)
             self.featureMaps[:,step] = self.hidden.T
 
-    #TODO does not work for multiple channels
-    def slideDeconv(self, featureMap, filterT):
-        #fmR = featureMap.reshape(self.fStepsOneAxis, self.fStepsOneAxis)
-        #filterT = filterT[:,:,:1]
-        #filterT.shape = (3,3)
-        filterSizeX = int(math.sqrt(self.filterSize))
-        fOnInput = np.zeros((self.axisLength,self.axisLength))
-        for step in range(self.allFSteps - 1):
-            x = (step + self.stride) % self.fStepsOneAxis
-            y = int((step + self.stride) / self.fStepsOneAxis)
-            temp = self.reLu(np.dot(featureMap[step],filterT))
-            temp = temp.reshape(filterSizeX,filterSizeX)
-            fOnInput[y:filterSizeX+y,x:filterSizeX+x] = temp
-        return fOnInput
+            if observe:
+                #reconstruction of image with individual filter
+                self.observeFilter([1])
+                self.backwardActivation(self.obsFilter)
+
+            reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
+            self.reconstrInput = reconstrR.flatten()
+
+    #all filter except the choosen ones are set to 0
+    def observeFilter(self,observed):
+        self.obsFilter = np.zeros((self.filterAmount, self.filterSize*self.channels))
+        for i in range(len(observed)):
+            f = observed[i]
+            if f < self.filterAmount:
+                self.obsFilter[f,:] = self.filter[i,:]

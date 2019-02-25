@@ -3,7 +3,7 @@ import math
 plt.rcParams['toolbar'] = 'None'
 import numpy as np
 
-#ONLY FOR SINGLE LAYER
+#ONLY FOR A SINGLE LAYER
 class Viz:
 
     elementsY = 4
@@ -49,17 +49,6 @@ class Viz:
             if i < 1:
                 plt.ylabel('Filter',rotation = Viz.rot,fontsize=Viz.fontSize)
 
-    def showFonInput(self):
-        self.fig.add_subplot(Viz.elementsY, self.fAmount, 1)
-        #data = self.fms.T
-        #data = data[i * self.fmSize:(i + 1) * self.fmSize]
-        #data = data.reshape(self.fStepsAxis, self.fStepsAxis)
-        plt.imshow(self.foo, interpolation='None')
-        plt.xticks([])
-        plt.yticks([])
-        l = plt.ylabel('Filter On Input', rotation=Viz.rot, fontsize=Viz.fontSize)
-
-
     def showFeatures(self, featureMaps, filter):
         for i in range(self.fAmount):
             self.fig.add_subplot(Viz.elementsY, self.fAmount, Viz.rowFMs * self.fAmount + i + 1)
@@ -102,7 +91,6 @@ class Viz:
         self.showInput(self.input,Viz.rowInput)
         self.showFilter()
         self.showFMs()
-        #self.showFonInput()
-        #self.showInput(self.recon,Viz.rowRecon)
+        self.showInput(self.recon,Viz.rowRecon)
         plt.draw()
         plt.pause(0.0001)
