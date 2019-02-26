@@ -15,7 +15,7 @@ y = np.array([  [1,2,3],
 foo = x.flatten('K')
 print(foo)
 
-
+print(np.average(x))
 #print(np.roll(x.flatten(),3))
 #print(x.T)
 #print(x.T.flatten())

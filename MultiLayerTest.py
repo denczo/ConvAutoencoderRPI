@@ -21,85 +21,27 @@ for i in range(amountData):
 def vizLayer(cl,height,width,name):
     fSizeAxis = int(math.sqrt(cl.filterSize))
     fmSize = cl.fStepsOneAxis ** 2
-    viz = Viz(height,width,filterAmount,fmSize,fSizeAxis,cl.fStepsOneAxis,name)
+    viz = Viz(height,width,cl.filterAmount,fmSize,fSizeAxis,cl.fStepsOneAxis,name)
     return viz
 
-#img=mpimg.imread('images/awing32x32.png')
-#img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
+img=mpimg.imread('images/stardestroyer64x64.png')
+img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
 
 channels = 1
-filterAmount = 5
+filterAmount = 7
 layer = []
-
 #input, channels, filterSize, filterAmount, stride, learnRate
-#CL1 = ConvLayerLight(img,channels, 9, filterAmount, 2, 0.01)
+#CL1 = ConvLayerLight(img,channels, 9, filterAmount, 1, 0.01)
 CL1 = ConvLayerLight(dataBatch[0],channels, 9, filterAmount, 1, 0.01)
-#Viz1 = vizLayer(CL1,5,9,"1ST")
-Viz1 = 0
+CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 16, 1, 0.01)
+CL3 = ConvLayerLight(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 16, 1, 0.01)
 
+def trainConvLayer(prevLayer,currLayer,observe):
 
-for i in range(0):
-    CL1.updateInput(dataBatch[i])
-    if i < 100:
-        CL1.slide(True,True)
-    else:
-        CL1.slide(False,True)
-
-    if i%25 == 0:
-
-        print(i)
-        Viz1.setInputs(CL1.input,CL1.filter,CL1.featureMaps.flatten(),CL1.reconstrInput,channels)
-        Viz1.visualizeNet()
-
-#Viz1.endViz()
-
-CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 9, 2, 0.001)
-#Viz2 = vizLayer(CL2,5,9,"2ND")
-Viz2 = 0
-
-for i in range(0):
-    CL1.updateInput(dataBatch[i])
-    CL1.slide(False,False)
-
-    CL2.updateInput(CL1.featureMaps.flatten())
-    if i < 100:
-        CL2.slide(True,True)
-    else:
-        CL2.slide(False,True)
-
-    if i%25 == 0:
-        print(i)
-        Viz2.setInputs(CL2.input,CL2.filter,CL2.featureMaps.flatten(),CL2.reconstrInput,CL1.filterAmount)
-        Viz2.visualizeNet()
-
-
-
-CL3 = ConvLayerLight(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 9, 2, 0.001)
-#Viz3 = vizLayer(CL3,5,9,"3RD")
-Viz3 = 0
-for i in range(0):
-    CL1.updateInput(dataBatch[i])
-    CL1.slide(False)
-    CL2.updateInput(CL1.featureMaps.flatten())
-    CL2.slide(False)
-    CL3.updateInput(CL2.featureMaps.flatten())
-
-    if i < 500:
-        CL3.slide(True)
-    else:
-        CL3.slide(False)
-
-    if i%25 == 0:
-        print(i)
-        Viz3.setInputs(CL3.input,CL3.filter,CL3.featureMaps.flatten(),None,CL2.filterAmount)
-        Viz3.visualizeNet()
-
-def trainConvLayer(prevLayer,currLayer):
-
-    Viz = vizLayer(currLayer, 5, 9, len(prevLayer))
+    Viz = vizLayer(currLayer, 6, 14, len(prevLayer))
     filterAmount = 0
     prevData = 0
-    for i in range(100):
+    for i in range(105):
         if len(prevLayer) <= 0:
             filterAmount = currLayer.filterAmount
             prevOut = dataBatch[i]
@@ -117,18 +59,24 @@ def trainConvLayer(prevLayer,currLayer):
         currLayer.updateInput(prevOut)
 
         if i < 500:
-            currLayer.slide(True,False)
+            currLayer.slide(True,observe)
         else:
-            currLayer.slide(False,False)
+            currLayer.slide(False,observe)
 
         if i%25 == 0:
             print(i)
-            Viz.setInputs(currLayer.input,currLayer.filter,currLayer.featureMaps.flatten(),None,currLayer.channels)
-            Viz.visualizeNet()
+            Viz.setInputs(currLayer.input,currLayer.filter,currLayer.featureMaps.flatten(),currLayer.reconstrInput,currLayer.channels)
+            Viz.visualizeNet(False)
 
     Viz.endViz()
     layer.append(currLayer)
 
-trainConvLayer(layer,CL1)
-trainConvLayer(layer,CL2)
-trainConvLayer(layer,CL3)
+trainConvLayer(layer,CL1,False)
+trainConvLayer(layer,CL2,False)
+trainConvLayer(layer,CL3,False)
+
+#CL2.foo(CL3.reconstrInput)
+CL1.foo(CL2.reconstrInput.reshape(CL1.filterAmount,CL1.fStepsOneAxis**2))
+Viz = vizLayer(CL1, 5, 9, 0)
+Viz.setInputs(CL1.input,CL1.filter,CL1.featureMaps.flatten(),CL1.reconstrInput,CL1.channels)
+Viz.visualizeFeatures(CL1.reconstrInput,True)

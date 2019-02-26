@@ -48,18 +48,6 @@ class Viz:
             if i < 1:
                 plt.ylabel('Filter',rotation = Viz.rot,fontsize=Viz.fontSize)
 
-    def showFeatures(self, featureMaps, filter):
-        for i in range(self.fAmount):
-            self.fig.add_subplot(Viz.elementsY, self.fAmount, Viz.rowFMs * self.fAmount + i + 1)
-            data = self.fms.T
-            data = data[i * self.fmSize:(i + 1) * self.fmSize]
-            data = data.reshape(self.fStepsAxis, self.fStepsAxis)
-            plt.imshow(data, interpolation='None')
-            plt.xticks([])
-            plt.yticks([])
-            if i < 1:
-                l = plt.ylabel('Features ', rotation=Viz.rot, fontsize=Viz.fontSize)
-
     def showFMs(self):
         for i in range(self.fAmount):
             self.fig.add_subplot(Viz.elementsY, self.fAmount, Viz.rowFMs * self.fAmount + i +1)
@@ -85,14 +73,36 @@ class Viz:
             elif i < 1 and row == Viz.rowRecon:
                 plt.ylabel('Reconstruction',rotation = Viz.rot,fontsize=Viz.fontSize)
 
-    def visualizeNet(self):
+    def showFeatures(self, reconstr, row):
+        for i in range(self.channels):
+            self.fig.add_subplot(Viz.elementsY, self.fAmount, row * self.fAmount + i + 1)
+            data = reconstr[i * self.inputSize:(i + 1) * self.inputSize]
+            data = data.reshape(self.imSizeAxis, self.imSizeAxis)
+            plt.imshow(data, interpolation='None')
+            plt.xticks([])
+            plt.yticks([])
+            if i < 1 :
+                plt.ylabel('Features', rotation=Viz.rot, fontsize=Viz.fontSize)
+
+    def visualizeNet(self,stop):
         self.fig.clear()
         self.showInput(self.input,Viz.rowInput)
         self.showFilter()
         self.showFMs()
-        #self.showInput(self.recon,Viz.rowRecon)
+        self.showInput(self.recon,Viz.rowRecon)
         plt.draw()
         plt.pause(0.0001)
+        if stop:
+            plt.show()
+
+    def visualizeFeatures(self,reconstr,stop):
+        self.fig.clear()
+        self.showInput(self.input, Viz.rowInput)
+        self.showInput(reconstr, Viz.rowFilter)
+        plt.draw()
+        plt.pause(0.0001)
+        if stop:
+            plt.show()
 
     def endViz(self):
         plt.close()
