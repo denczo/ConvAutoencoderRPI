@@ -14,15 +14,15 @@ class Viz:
     rot = 90
     fontSize = 8
 
-    def __init__(self, x,y, fAmount, fmSize, fSizeAxis, fStepsAxis):
+    def __init__(self, x,y, fAmount, fmSize, fSizeAxis, fStepsAxis, layerNr):
         self.fig = plt.figure(figsize=(y, x))
-        self.fig.canvas.set_window_title('Convolutional Autoencoder')
+        self.fig.canvas.set_window_title('Convolutional Autoencoder | TRAINING '+str(layerNr)+' LAYER')
         self.fAmount = fAmount
         self.fmSize = fmSize
         self.fSizeAxis = fSizeAxis
         self.fStepsAxis = fStepsAxis
 
-    def setInputs(self, input, filter, fms, recon, channels, foo):
+    def setInputs(self, input, filter, fms, recon, channels):
         self.channels = channels
         self.inputSize = int(len(input)/channels)
         self.imSizeAxis = int(math.sqrt(self.inputSize))
@@ -30,7 +30,6 @@ class Viz:
         self.filter = filter
         self.fms = fms
         self.recon = recon
-        self.foo = foo
 
     #only for first Layer
     def showFilter(self):
@@ -91,6 +90,9 @@ class Viz:
         self.showInput(self.input,Viz.rowInput)
         self.showFilter()
         self.showFMs()
-        self.showInput(self.recon,Viz.rowRecon)
+        #self.showInput(self.recon,Viz.rowRecon)
         plt.draw()
         plt.pause(0.0001)
+
+    def endViz(self):
+        plt.close()

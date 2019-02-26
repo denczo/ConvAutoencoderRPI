@@ -63,14 +63,14 @@ class ConvLayerLight:
             self.featureMaps[:,step] = self.hidden.T
 
             if observe:
-                #reconstruction of image with individual filter
+                #reconstruction of image with individual filter (sets all filter except chosen ones to 0)
                 self.observeFilter([1])
                 self.backwardActivation(self.obsFilter)
 
             reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
             self.reconstrInput = reconstrR.flatten()
 
-    #all filter except the choosen ones are set to 0
+    #all filter except the chosen ones are set to 0
     def observeFilter(self,observed):
         self.obsFilter = np.zeros((self.filterAmount, self.filterSize*self.channels))
         for i in range(len(observed)):
