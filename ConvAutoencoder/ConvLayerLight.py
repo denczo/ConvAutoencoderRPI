@@ -50,12 +50,17 @@ class ConvLayerLight:
         inputR = self.input.reshape(self.axisLength,self.axisLength,self.channels)
         reconstrR = self.reconstrInput.reshape(self.axisLength,self.axisLength,self.channels)
         filterSizeX = int(math.sqrt(self.filterSize))
-
+        x = 0
         for step in range(self.allFSteps-1):
-            x = (step+self.stride) % self.fStepsOneAxis
-            y = int((step+self.stride) / self.fStepsOneAxis)
+
+            if x >= (self.axisLength-filterSizeX):
+                x = 0
+
+            y = int((step*self.stride) / (self.axisLength-filterSizeX+1))*self.stride
+            #print(x,y,step)
             cutout = inputR[y:filterSizeX+y,x:filterSizeX+x,:]
             cutout = cutout.reshape(self.filterSize*self.channels,1)
+
             self.forwardActivation(cutout)
             self.backwardActivation(self.filter)
             if trainig:
@@ -69,16 +74,13 @@ class ConvLayerLight:
                 self.backwardActivation(self.obsFilter)
 
             reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
+            x += self.stride
+
         self.reconstrInput = reconstrR.flatten()
 
-
-
-    def foo(self,featureMaps):
+    def guidedBackwardsActivation(self,featureMaps):
         reconstrR = self.reconstrInput.reshape(self.axisLength, self.axisLength, self.channels)
         filterSizeX = int(math.sqrt(self.filterSize))
-
-        #for i in range(self.filterAmount):
-            #self.hidden[i] = np.max(featureMaps[i,:])
 
         for step in range(self.allFSteps - 1):
             x = (step + self.stride) % self.fStepsOneAxis

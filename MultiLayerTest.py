@@ -24,24 +24,24 @@ def vizLayer(cl,height,width,name):
     viz = Viz(height,width,cl.filterAmount,fmSize,fSizeAxis,cl.fStepsOneAxis,name)
     return viz
 
-img=mpimg.imread('images/stardestroyer64x64.png')
+img=mpimg.imread('images/awing32x32.png')
 img=np.append(img[:,:,:1].flatten(),np.append(img[:,:,1:2],img[:,:,2:3]))
 
 channels = 1
-filterAmount = 7
+filterAmount = 9
 layer = []
 #input, channels, filterSize, filterAmount, stride, learnRate
-#CL1 = ConvLayerLight(img,channels, 9, filterAmount, 1, 0.01)
-CL1 = ConvLayerLight(dataBatch[0],channels, 9, filterAmount, 1, 0.01)
-CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 16, 1, 0.01)
-CL3 = ConvLayerLight(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 16, 1, 0.01)
+#CL1 = ConvLayerLight(img,channels, 9, 5, 1, 0.01)
+CL1 = ConvLayerLight(dataBatch[0],channels, 9, 5, 2, 0.01)
+CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 10, 1, 0.01)
+CL3 = ConvLayerLight(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 15, 1, 0.01)
 
-def trainConvLayer(prevLayer,currLayer,observe):
+def trainConvLayer(prevLayer,currLayer,observe,epochs):
 
     Viz = vizLayer(currLayer, 6, 14, len(prevLayer))
     filterAmount = 0
     prevData = 0
-    for i in range(105):
+    for i in range(epochs):
         if len(prevLayer) <= 0:
             filterAmount = currLayer.filterAmount
             prevOut = dataBatch[i]
@@ -58,7 +58,7 @@ def trainConvLayer(prevLayer,currLayer,observe):
 
         currLayer.updateInput(prevOut)
 
-        if i < 500:
+        if i < 100000:
             currLayer.slide(True,observe)
         else:
             currLayer.slide(False,observe)
@@ -71,12 +71,12 @@ def trainConvLayer(prevLayer,currLayer,observe):
     Viz.endViz()
     layer.append(currLayer)
 
-trainConvLayer(layer,CL1,False)
-trainConvLayer(layer,CL2,False)
-trainConvLayer(layer,CL3,False)
+trainConvLayer(layer,CL1,False,100)
+trainConvLayer(layer,CL2,False,500)
+#trainConvLayer(layer,CL3,False,150)
 
-#CL2.foo(CL3.reconstrInput)
-CL1.foo(CL2.reconstrInput.reshape(CL1.filterAmount,CL1.fStepsOneAxis**2))
+#CL2.guidedBackwardsActivation(CL3.reconstrInput.reshape(CL2.filterAmount,CL2.fStepsOneAxis**2))
+CL1.guidedBackwardsActivation(CL2.reconstrInput.reshape(CL1.filterAmount,CL1.fStepsOneAxis**2))
 Viz = vizLayer(CL1, 5, 9, 0)
 Viz.setInputs(CL1.input,CL1.filter,CL1.featureMaps.flatten(),CL1.reconstrInput,CL1.channels)
 Viz.visualizeFeatures(CL1.reconstrInput,True)

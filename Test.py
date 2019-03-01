@@ -21,3 +21,7 @@ print(np.average(x))
 #print(x.T.flatten())
 
 #print(np.dot(2,x.flatten()))
+
+print(int(2.99))
+x = [1,2,3,4,5]
+print(x[0:2])
