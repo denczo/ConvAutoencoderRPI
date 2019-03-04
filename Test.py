@@ -25,3 +25,6 @@ print(np.average(x))
 print(int(2.99))
 x = [1,2,3,4,5]
 print(x[0:2])
+
+for i in range(0,100,3):
+    print(i)

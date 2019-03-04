@@ -46,50 +46,43 @@ class ConvLayerLight:
         self.filter = np.add(self.filter, self.lernRate*np.dot(self.hidden,temp.T))
 
     #slide all filter over the entire image with given stride and computes convolution
-    def slide(self,trainig,observe):
+    def slide(self,trainig):
         inputR = self.input.reshape(self.axisLength,self.axisLength,self.channels)
         reconstrR = self.reconstrInput.reshape(self.axisLength,self.axisLength,self.channels)
         filterSizeX = int(math.sqrt(self.filterSize))
-        x = 0
-        for step in range(self.allFSteps-1):
+        convStep = 0
+        for y in range(0,self.axisLength-filterSizeX,self.stride):
+            for x in range(0,self.axisLength-filterSizeX,self.stride):
+                cutout = inputR[y:filterSizeX+y,x:filterSizeX+x,:]
+                cutout = cutout.reshape(self.filterSize*self.channels,1)
+                self.forwardActivation(cutout)
+                self.backwardActivation(self.filter)
+                if trainig:
+                    self.contrastiveDivergence(cutout)
 
-            if x >= (self.axisLength-filterSizeX):
-                x = 0
+                self.featureMaps[:,convStep] = self.hidden.T
+                convStep += 1
 
-            y = int((step*self.stride) / (self.axisLength-filterSizeX+1))*self.stride
-            #print(x,y,step)
-            cutout = inputR[y:filterSizeX+y,x:filterSizeX+x,:]
-            cutout = cutout.reshape(self.filterSize*self.channels,1)
-
-            self.forwardActivation(cutout)
-            self.backwardActivation(self.filter)
-            if trainig:
-                self.contrastiveDivergence(cutout)
-
-            self.featureMaps[:,step] = self.hidden.T
-
-            if observe:
-                #reconstruction of image with individual filter (sets all filter except chosen ones to 0)
-                self.observeFilter([1,4])
-                self.backwardActivation(self.obsFilter)
-
-            reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
-            x += self.stride
+                reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
 
         self.reconstrInput = reconstrR.flatten()
 
-    def guidedBackwardsActivation(self,featureMaps):
+    def guidedBackwardsActivation(self,featureMaps,obsFilter):
         reconstrR = self.reconstrInput.reshape(self.axisLength, self.axisLength, self.channels)
         filterSizeX = int(math.sqrt(self.filterSize))
 
-        for step in range(self.allFSteps - 1):
-            x = (step + self.stride) % self.fStepsOneAxis
-            y = int((step + self.stride) / self.fStepsOneAxis)
-            self.hidden = featureMaps[:,step]
-            self.backwardActivation(self.filter)
+        convStep = 0
+        for y in range(0, self.axisLength - filterSizeX, self.stride):
+            for x in range(0, self.axisLength - filterSizeX, self.stride):
+                self.hidden = featureMaps[:,convStep]
+                convStep += 1
 
-            reconstrR[y:filterSizeX + y, x:filterSizeX + x, :] = self.reconstrFilter.reshape(filterSizeX, filterSizeX, self.channels)
-            self.reconstrInput = reconstrR.flatten()
+                # reconstruction of image with individual filter (sets all filter except chosen ones to 0)
+                self.observeFilter(obsFilter)
+                self.backwardActivation(self.obsFilter)
+                reconstrR[y:filterSizeX + y, x:filterSizeX + x, :] = self.reconstrFilter.reshape(filterSizeX, filterSizeX, self.channels)
+
+        self.reconstrInput = reconstrR.flatten()
 
     #all filter except the chosen ones are set to 0
     def observeFilter(self,observed):
