@@ -16,7 +16,7 @@ class Viz:
 
     def __init__(self, x,y, fAmount, fmSize, fSizeAxis, fStepsAxis, layerNr):
         self.fig = plt.figure(figsize=(y, x))
-        self.fig.canvas.set_window_title('Convolutional Autoencoder | TRAINING '+str(layerNr)+' LAYER')
+        self.fig.canvas.set_window_title('Convolutional Autoencoder | TRAINING '+str(layerNr+1)+'. LAYER')
         self.fAmount = fAmount
         self.fmSize = fmSize
         self.fSizeAxis = fSizeAxis
@@ -64,6 +64,10 @@ class Viz:
         for i in range(self.channels):
             self.fig.add_subplot(Viz.elementsY, self.fAmount, row * self.fAmount + i +1)
             data = input[i* self.inputSize:(i+1)*self.inputSize]
+            foo = input.reshape(self.imSizeAxis,self.imSizeAxis,self.channels)
+
+            #data = data.reshape(self.imSizeAxis, self.imSizeAxis)
+            data = foo[:,:,i:(i+1)]
             data = data.reshape(self.imSizeAxis, self.imSizeAxis)
             plt.imshow(data, interpolation='None')
             plt.xticks([])
