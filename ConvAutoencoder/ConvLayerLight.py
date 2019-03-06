@@ -68,7 +68,7 @@ class ConvLayerLight:
 
                 reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
 
-        self.reconstrInput = reconstrR.flatten('A')
+        self.reconstrInput = reconstrR.flatten()
 
     def guidedBackwardsActivation(self,featureMaps,obsFilter):
         reconstrR = self.reconstrInput.reshape(self.axisLength, self.axisLength, self.channels)
