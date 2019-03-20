@@ -1,7 +1,8 @@
 import numpy as np
 import math
 
-class ConvLayerLight:
+#basic convolutional layer
+class ConvLayer:
 
     #only for cubic images
     def __init__(self, input, channels, filterSize, filterAmount, stride, learnRate):
@@ -65,35 +66,24 @@ class ConvLayerLight:
 
                 self.featureMaps[:,convStep] = self.hidden.T
                 convStep += 1
-
                 reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
 
         self.reconstrInput = reconstrR.flatten()
 
-    def guidedBackwardsActivation(self,featureMaps,obsFilter):
-        reconstrR = self.reconstrInput.reshape(self.axisLength, self.axisLength, self.channels)
-        filterSizeX = int(math.sqrt(self.filterSize))
+    def trainConvLayer(self, prevLayer, currLayer, iterations, dataBatch):
 
-        convStep = 0
-        for y in range(0, self.axisLength - filterSizeX, self.stride):
-            for x in range(0, self.axisLength - filterSizeX, self.stride):
-                self.hidden = featureMaps[:,convStep]
-                convStep += 1
+        for i in range(iterations):
+            if len(prevLayer) <= 0:
+                prevOut = dataBatch[i]
+            else:
+                prevLayer[0].updateInput(dataBatch[i])
+                prevLayer[0].slide(False)
+                prevOut = prevLayer[-1].featureMaps.flatten('F')
 
-                # reconstruction of image with individual filter (sets all filter except chosen ones to 0)
-                self.observeFilter(obsFilter)
-                self.backwardActivation(self.obsFilter)
-                reconstrR[y:filterSizeX + y, x:filterSizeX + x, :] = self.reconstrFilter.reshape(filterSizeX, filterSizeX, self.channels)
+            for j in range(len(prevLayer) - 1):
+                prevData = prevLayer[j].featureMaps.flatten('F')
+                prevLayer[j + 1].updateInput(prevData)
+                prevLayer[j + 1].slide(False)
 
-        self.reconstrInput = reconstrR.flatten()
-
-    #all filter except the chosen ones are set to 0
-    def observeFilter(self,observed):
-        self.obsFilter = np.zeros((self.filterAmount, self.filterSize*self.channels))
-        if observed > self.filterAmount:
-            observed = self.filterAmount
-        else:
-            observed = abs(observed)
-
-        for i in range(observed):
-            self.obsFilter[i,:] = self.filter[i,:]
+            currLayer.updateInput(prevOut)
+            currLayer.slide(True)
