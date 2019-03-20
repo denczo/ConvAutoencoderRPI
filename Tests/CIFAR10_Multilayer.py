@@ -1,6 +1,6 @@
 from ConvAutoencoder.ConvLayerLight import ConvLayerLight
 from ConvAutoencoder.Visualizer import Viz
-from LinearSystem.LinearSystem import LinearSystem
+from ConvAutoencoder.LinearSystem import LinearSystem
 import numpy as np
 import math
 

@@ -19,10 +19,8 @@ class LinearSystem:
         self.targets = targets
 
     def train(self):
-        #alle ableitungen nach wij für ein muster
         for oj in range(self.outputSize):
             temp = np.dot(self.input,self.input.T)
-            #print(temp,temp.shape)
             self.tempMatrix[:,:,oj] = np.add(self.tempMatrix[:,:,oj],temp)
             self.tempVector[:,oj] = np.add(self.tempVector[:,oj],np.dot(self.input.T,self.targets[oj]))
 
@@ -32,6 +30,3 @@ class LinearSystem:
 
     def run(self,input):
         return np.dot(input,self.weigths)
-        #input.shape = (len(input),1)
-        #print(self.weigths.shape,input.shape)
-        #print(np.dot(input,self.weigths))

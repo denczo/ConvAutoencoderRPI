@@ -1,6 +1,6 @@
 from ConvAutoencoder.ConvLayerLight import ConvLayerLight
 from ConvAutoencoder.Visualizer import Viz
-from LinearSystem.LinearSystem import LinearSystem
+from ConvAutoencoder.LinearSystem import LinearSystem
 import numpy as np
 import math
 
@@ -8,44 +8,47 @@ training_data_file = open("C:/Users/Dennis/Documents/studium/mnist_train.csv",'r
 data = training_data_file.readlines()
 training_data_file.close()
 
-dataLength = len(data)
-amountData = 500
-dataBatch = np.zeros((amountData,784))
-targets = np.zeros((amountData,10)) + 0.01
+test_data_file = open("C:/Users/Dennis/Documents/studium/mnist_test.csv",'r')
+dataTest = test_data_file.readlines()
+test_data_file.close()
 
-for i in range(amountData):
-    oneDigit = data[i % dataLength].split(',')
-    #temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99) + 0.01
-    temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99)
-    targets[i,int(oneDigit[0])] = 0.99
+layer = []
+dataTestLength = len(dataTest)
+#dataLength = len(data)
+testBatch = np.zeros((dataTestLength,784))
+testTargets = np.zeros((dataTestLength,10)) + 0.01
+dataBatch = np.zeros((dataTestLength,784))
+targets = np.zeros((dataTestLength,10)) + 0.01
+
+#MNIST traing & test data with targets
+for i in range(dataTestLength):
+    oneDigit = data[i % dataTestLength].split(',')
+    oneDigitTest = dataTest[i % dataTestLength].split(',')
+
+    temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99) + 0.01
+    tempTest = (np.asfarray(oneDigitTest[1:]) / 255.0 * 0.99) + 0.01
+
     dataBatch[i] = temp
+    targets[i,int(oneDigit[0])] = 0.99
 
+    testBatch[i] = tempTest
+    testTargets[i, int(oneDigitTest[0])] = 0.99
+
+#vizualisation setup
 def vizLayer(cl,height,width,name):
     fSizeAxis = int(math.sqrt(cl.filterSize))
     fmSize = cl.fStepsOneAxis ** 2
     viz = Viz(height,width,cl.filterAmount,fmSize,fSizeAxis,cl.fStepsOneAxis,name)
     return viz
 
-channels = 1
-filterAmount = 9
-layer = []
-#input, channels, filterSize, filterAmount, stride, learnRate
-CL1 = ConvLayerLight(dataBatch[0],channels, 9, 4, 3, 0.05)
-CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 8, 3, 0.005)
-
-def trainConvLayer(prevLayer,currLayer,epochs):
+def trainConvLayer(prevLayer,currLayer,iterations):
 
     Viz = vizLayer(currLayer, 6, 14, len(prevLayer))
-    filterAmount = 0
-    prevData = 0
-    for i in range(epochs):
+    for i in range(iterations):
         if len(prevLayer) <= 0:
-            filterAmount = currLayer.filterAmount
             prevOut = dataBatch[i]
         else:
-            filterAmount = prevLayer[-1].filterAmount
             prevLayer[0].updateInput(dataBatch[i])
-
             prevLayer[0].slide(False)
             prevOut = prevLayer[-1].featureMaps.flatten('F')
 
@@ -69,12 +72,19 @@ def trainConvLayer(prevLayer,currLayer,epochs):
     Viz.endViz()
     layer.append(currLayer)
 
+
+channels = 1
+filterAmount = 9
+#input, channels, filterSize, filterAmount, stride, learnRate
+CL1 = ConvLayerLight(dataBatch[0],channels, 9, 4, 3, 0.05)
+CL2 = ConvLayerLight(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 12, 3, 0.005)
+
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-trainConvLayer(layer,CL1,51)
+trainConvLayer(layer,CL1,50)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-trainConvLayer(layer,CL2,51)
+trainConvLayer(layer,CL2,250)
 
 #CL2.guidedBackwardsActivation(CL2.featureMaps.reshape(CL2.filterAmount,CL2.fStepsOneAxis**2),16)
 #temp = CL2.reconstrInput.reshape(CL1.fStepsOneAxis,CL1.fStepsOneAxis,CL1.filterAmount).transpose(2,0,1)
@@ -86,8 +96,9 @@ trainConvLayer(layer,CL2,51)
 
 ls = LinearSystem(len(CL2.featureMaps.flatten()),10)
 
-#training
-for i in range(amountData):
+print("Started training ...")
+#TRAINING
+for i in range(dataTestLength):
     CL1.updateInput(dataBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
@@ -99,22 +110,24 @@ for i in range(amountData):
 ls.solveLS()
 
 falsePredicted = 0
-epochs = 500
-#test
-for i in range(epochs):
-    CL1.updateInput(dataBatch[i])
+
+print("Started test ...")
+#TEST
+for i in range(dataTestLength):
+    CL1.updateInput(testBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
     CL2.slide(False)
-    temp = np.argmax(targets[i,:])
+
+    temp = np.argmax(testTargets[i,:])
     result = np.argmax(ls.run(CL2.featureMaps.flatten()))
     if result != temp:
         falsePredicted += 1
-    print("exspected: ",temp)
-    print("actual: ",result)
-    print("")
+    #print("exspected: ",temp)
+    #print("actual: ",result)
+    #print("")
 
-correct = epochs - falsePredicted
-temp = correct/epochs*100
+correct = dataTestLength - falsePredicted
+temp = correct/dataTestLength*100
 
 print("correct predicted: ",temp,"%")
