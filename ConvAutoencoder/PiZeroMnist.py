@@ -2,13 +2,20 @@ from ConvAutoencoder.ConvLayer import ConvLayer
 from ConvAutoencoder.LinearSystem import LinearSystem
 import numpy as np
 import time
+from os.path import dirname, realpath
+
+
+filepath = realpath(__file__)
+dirOfFile = dirname(filepath)
+parentDir = dirname(dirOfFile)
+parentParentDir = dirname(parentDir)
 
 #=== MNIST DATA PREPARATION ===
-training_data_file = open("C:/Users/Dennis/Documents/studium/mnist_train.csv",'r')
+training_data_file = open(parentParentDir+"\mnist_train.csv",'r')
 data = training_data_file.readlines()
 training_data_file.close()
 
-test_data_file = open("C:/Users/Dennis/Documents/studium/mnist_test.csv",'r')
+test_data_file = open(parentParentDir+"\mnist_test.csv",'r')
 dataTest = test_data_file.readlines()
 test_data_file.close()
 
@@ -35,15 +42,15 @@ for i in range(dataTestLength):
 print("Started feature learning ...")
 start = time.time()
 #input, channels, filterSize, filterAmount, stride, learnRate
-CL1 = ConvLayer(dataBatch[0], 1, 9, 6, 3, 0.05)
-CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 12, 3, 0.005)
+CL1 = ConvLayer(dataBatch[0], 1, 9, 4, 3, 0.05)
+CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 16, 3, 0.005)
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
 CL1.trainConvLayer(prevLayer,CL1,25,dataBatch)
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-CL2.trainConvLayer(prevLayer,CL2,350,dataBatch)
+CL2.trainConvLayer(prevLayer,CL2,250,dataBatch)
 prevLayer.append(CL2)
 end = time.time()
 print("Finished feature learning in ",round(end-start,2),"s")

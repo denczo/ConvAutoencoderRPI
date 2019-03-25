@@ -1,13 +1,19 @@
 from ConvAutoencoder.ConvLayerViz import ConvLayerViz
 from ConvAutoencoder.LinearSystem import LinearSystem
 import numpy as np
+from os.path import dirname, realpath
+
+filepath = realpath(__file__)
+dirOfFile = dirname(filepath)
+parentDir = dirname(dirOfFile)
+parentParentDir = dirname(parentDir)
 
 #=== MNIST DATA PREPARATION ===
-training_data_file = open("C:/Users/Dennis/Documents/studium/mnist_train.csv",'r')
+training_data_file = open(parentParentDir+"\mnist_train.csv",'r')
 data = training_data_file.readlines()
 training_data_file.close()
 
-test_data_file = open("C:/Users/Dennis/Documents/studium/mnist_test.csv",'r')
+test_data_file = open(parentParentDir+"\mnist_test.csv",'r')
 dataTest = test_data_file.readlines()
 test_data_file.close()
 
