@@ -11,11 +11,12 @@ parentDir = dirname(dirOfFile)
 parentParentDir = dirname(parentDir)
 
 #=== MNIST DATA PREPARATION ===
-training_data_file = open(parentParentDir+"\mnist_train.csv",'r')
+print("Started MNIST data preparation ...")
+training_data_file = open(parentParentDir+"/mnist_train.csv",'r')
 data = training_data_file.readlines()
 training_data_file.close()
 
-test_data_file = open(parentParentDir+"\mnist_test.csv",'r')
+test_data_file = open(parentParentDir+"/mnist_test.csv",'r')
 dataTest = test_data_file.readlines()
 test_data_file.close()
 
@@ -43,22 +44,22 @@ print("Started feature learning ...")
 start = time.time()
 #input, channels, filterSize, filterAmount, stride, learnRate
 CL1 = ConvLayer(dataBatch[0], 1, 9, 4, 3, 0.05)
-CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 16, 3, 0.005)
+CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 12, 3, 0.001)
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-CL1.trainConvLayer(prevLayer,CL1,25,dataBatch)
+CL1.trainConvLayer(prevLayer,CL1,50,dataBatch)
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
 CL2.trainConvLayer(prevLayer,CL2,250,dataBatch)
 prevLayer.append(CL2)
 end = time.time()
-print("Finished feature learning in ",round(end-start,2),"s")
+print("Finished feature learning: ",round(end-start,2),"s")
 
 #=== TRAINING ===
 ls = LinearSystem(len(CL2.featureMaps.flatten()),10)
-print("Started training ...")
-for i in range(dataTestLength):
+print("Started dense-layer training ...")
+for i in range(1000):
     CL1.updateInput(dataBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
@@ -70,8 +71,8 @@ for i in range(dataTestLength):
 ls.solveLS()
 oldEnd = end
 end = time.time()
-print("Finished training in ",round(end-oldEnd,2),"s")
-print("Entire training in ",round(end-start,2),"s")
+print("Finished training: ",round(end-oldEnd,2),"s")
+print("Duration entire training: ",round(end-start,2),"s")
 
 #=== TEST ===
 falsePredicted = 0
