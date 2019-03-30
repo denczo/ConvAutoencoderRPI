@@ -1,6 +1,7 @@
 from ConvAutoencoder.ConvLayerViz import ConvLayerViz
 from ConvAutoencoder.LinearSystem import LinearSystem
 import numpy as np
+import time
 from os.path import dirname, realpath
 
 filepath = realpath(__file__)
@@ -9,11 +10,12 @@ parentDir = dirname(dirOfFile)
 parentParentDir = dirname(parentDir)
 
 #=== MNIST DATA PREPARATION ===
-training_data_file = open(parentParentDir+"\mnist_train.csv",'r')
+print("Started MNIST data preparation ...")
+training_data_file = open(parentDir+"\mnist_train.csv",'r')
 data = training_data_file.readlines()
 training_data_file.close()
 
-test_data_file = open(parentParentDir+"\mnist_test.csv",'r')
+test_data_file = open(parentDir+"\mnist_test.csv",'r')
 dataTest = test_data_file.readlines()
 test_data_file.close()
 
@@ -37,17 +39,21 @@ for i in range(dataTestLength):
     testTargets[i, int(oneDigitTest[0])] = 0.99
 
 #=== 2 LAYER CONVOLUTIONAL AUTOENCODER INITIALIZATION ===
+print("Started feature learning ...")
+start = time.time()
 #input, channels, filterSize, filterAmount, stride, learnRate
 CL1 = ConvLayerViz(dataBatch[0], 1, 9, 4, 3, 0.05)
-CL2 = ConvLayerViz(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 12, 3, 0.005)
+CL2 = ConvLayerViz(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 14, 3, 0.005)
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-CL1.trainConvLayer(prevLayer,CL1,50,dataBatch)
+CL1.trainConvLayer(prevLayer,CL1,100,dataBatch)
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-CL2.trainConvLayer(prevLayer,CL2,250,dataBatch)
+CL2.trainConvLayer(prevLayer,CL2,1000,dataBatch)
 prevLayer.append(CL2)
+end = time.time()
+print("Finished feature learning: ",round(end-start,2),"s")
 
 #CL2.guidedBackwardsActivation(CL2.featureMaps.reshape(CL2.filterAmount,CL2.fStepsOneAxis**2),16)
 #temp = CL2.reconstrInput.reshape(CL1.fStepsOneAxis,CL1.fStepsOneAxis,CL1.filterAmount).transpose(2,0,1)
@@ -59,7 +65,7 @@ prevLayer.append(CL2)
 #=== TRAINING ===
 ls = LinearSystem(len(CL2.featureMaps.flatten()),10)
 print("Started training ...")
-for i in range(dataTestLength):
+for i in range(1000):
     CL1.updateInput(dataBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
@@ -69,6 +75,10 @@ for i in range(dataTestLength):
     ls.train()
 
 ls.solveLS()
+oldEnd = end
+end = time.time()
+print("Finished training: ",round(end-oldEnd,2),"s")
+print("Duration entire training: ",round(end-start,2),"s")
 
 #=== TEST ===
 falsePredicted = 0

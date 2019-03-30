@@ -6,7 +6,7 @@ class ConvLayer:
 
     #only for cubic images
     def __init__(self, input, channels, filterSize, filterAmount, stride, learnRate):
-        self.filter = np.random.uniform(low=-0.1, high=0.1, size=(filterAmount, filterSize*channels))
+        self.filter = np.random.uniform(low=-0.001, high=0.001, size=(filterAmount, filterSize*channels))
         self.filterAmount = filterAmount
         self.filterSize = filterSize
         self.stride = stride
@@ -63,7 +63,7 @@ class ConvLayer:
                 self.backwardActivation(self.filter)
                 if trainig:
                     self.contrastiveDivergence(cutout)
-
+                #print(self.hidden)
                 self.featureMaps[:,convStep] = self.hidden.T
                 convStep += 1
                 reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)

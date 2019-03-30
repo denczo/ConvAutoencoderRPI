@@ -10,8 +10,9 @@ class LinearSystem:
         self.weigths = np.zeros((self.inputSize, self.outputSize))
         self.output = np.zeros(self.outputSize)
         self.targets = np.zeros(self.outputSize)
-        self.tempMatrix = np.zeros((self.inputSize,self.inputSize,self.outputSize))
-        self.tempVector = np.zeros((self.inputSize,self.outputSize))
+        self.tempMatrix = np.zeros((self.inputSize,self.inputSize,self.outputSize)) + 0.01
+        self.tempVector = np.zeros((self.inputSize,self.outputSize)) + 0.01
+
 
     def setData(self,input,targets):
         self.input = input
