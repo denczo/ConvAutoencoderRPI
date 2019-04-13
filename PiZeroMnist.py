@@ -24,8 +24,8 @@ prevLayer = []
 dataTestLength = len(dataTest)
 testBatch = np.zeros((dataTestLength,784))
 testTargets = np.zeros((dataTestLength,10)) + 0.01
-dataLength = len(data)
-#dataLength = dataTestLength
+#dataLength = len(data)
+dataLength = dataTestLength
 dataBatch = np.zeros((dataLength,784))
 targets = np.zeros((dataLength,10)) + 0.01
 
@@ -83,7 +83,7 @@ print("Duration entire training: ",round(end-start,2),"s")
 #=== TEST ===
 falsePredicted = 0
 print("Started test ...")
-for i in range(10000):
+for i in range(400):
     CL1.updateInput(testBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
