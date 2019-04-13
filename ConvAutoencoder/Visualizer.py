@@ -108,5 +108,11 @@ class Viz:
         if stop:
             plt.show()
 
+    def plotError(self,error):
+        plt.plot(error)
+        plt.xlabel('Epochen')
+        plt.ylabel('Fehler')
+        plt.show()
+
     def endViz(self):
         plt.close()

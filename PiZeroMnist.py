@@ -24,8 +24,8 @@ prevLayer = []
 dataTestLength = len(dataTest)
 testBatch = np.zeros((dataTestLength,784))
 testTargets = np.zeros((dataTestLength,10)) + 0.01
-#dataLength = len(data)
-dataLength = dataTestLength
+dataLength = len(data)
+#dataLength = dataTestLength
 dataBatch = np.zeros((dataLength,784))
 targets = np.zeros((dataLength,10)) + 0.01
 
@@ -43,17 +43,21 @@ for i in range(dataLength):
 
 #=== 2 LAYER CONVOLUTIONAL AUTOENCODER INITIALIZATION ===
 print("Started feature learning ...")
+epochs = 4
 start = time.time()
 #input, channels, filterSize, filterAmount, stride, learnRate
 CL1 = ConvLayer(dataBatch[0], 1, 9, 4, 3, 0.05)
 CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 12, 3, 0.005)
+
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-CL1.trainConvLayer(prevLayer,CL1,50,dataBatch)
+for epoch in range(epochs):
+    CL1.trainConvLayer(prevLayer,CL1,50,dataBatch)
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-CL2.trainConvLayer(prevLayer,CL2,250,dataBatch)
+for epoch in range(epochs):
+    CL2.trainConvLayer(prevLayer,CL2,50,dataBatch)
 prevLayer.append(CL2)
 end = time.time()
 print("Finished feature learning: ",round(end-start,2),"s")
@@ -61,7 +65,8 @@ print("Finished feature learning: ",round(end-start,2),"s")
 #=== TRAINING ===
 ls = LinearSystem(len(CL2.featureMaps.flatten()),10)
 print("Started dense-layer training ...")
-for i in range(dataLength):
+
+for i in range(2000):
     CL1.updateInput(dataBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
@@ -78,7 +83,7 @@ print("Duration entire training: ",round(end-start,2),"s")
 #=== TEST ===
 falsePredicted = 0
 print("Started test ...")
-for i in range(dataTestLength):
+for i in range(10000):
     CL1.updateInput(testBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())

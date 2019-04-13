@@ -64,11 +64,12 @@ class ConvLayer:
                 if trainig:
                     self.contrastiveDivergence(cutout)
                 #print(self.hidden)
-                self.featureMaps[:,convStep] = self.hidden.T
-                convStep += 1
-                reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
+                else:
+                    self.featureMaps[:,convStep] = self.hidden.T
+                    convStep += 1
+                #reconstrR[y:filterSizeX+y,x:filterSizeX+x,:] = self.reconstrFilter.reshape(filterSizeX,filterSizeX,self.channels)
 
-        self.reconstrInput = reconstrR.flatten()
+        #self.reconstrInput = reconstrR.flatten()
 
     def trainConvLayer(self, prevLayer, currLayer, iterations, dataBatch):
 
@@ -78,12 +79,12 @@ class ConvLayer:
             else:
                 prevLayer[0].updateInput(dataBatch[i])
                 prevLayer[0].slide(False)
-                prevOut = prevLayer[-1].featureMaps.flatten('F')
+                for j in range(len(prevLayer) - 1):
+                    prevData = prevLayer[j].featureMaps.flatten('F')
+                    prevLayer[j + 1].updateInput(prevData)
+                    prevLayer[j + 1].slide(False)
 
-            for j in range(len(prevLayer) - 1):
-                prevData = prevLayer[j].featureMaps.flatten('F')
-                prevLayer[j + 1].updateInput(prevData)
-                prevLayer[j + 1].slide(False)
+                prevOut = prevLayer[-1].featureMaps.flatten('F')
 
             currLayer.updateInput(prevOut)
             currLayer.slide(True)

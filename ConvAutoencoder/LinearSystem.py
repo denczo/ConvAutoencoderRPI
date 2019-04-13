@@ -20,14 +20,15 @@ class LinearSystem:
         self.targets = targets
 
     def train(self):
+        temp = np.dot(self.input, self.input.T)
         for oj in range(self.outputSize):
-            temp = np.dot(self.input,self.input.T)
             self.tempMatrix[:,:,oj] = np.add(self.tempMatrix[:,:,oj],temp)
             self.tempVector[:,oj] = np.add(self.tempVector[:,oj],np.dot(self.input.T,self.targets[oj]))
 
     def solveLS(self):
         for oj in range(len(self.output)):
-            self.weigths[:,oj] = np.linalg.solve(self.tempMatrix[:,:,oj],self.tempVector[:,oj])
+            #self.weigths[:,oj] = np.add(self.weigths[:,oj],np.linalg.lstsq(self.tempMatrix[:,:,oj],self.tempVector[:,oj],rcond='warn'))
+            self.weigths[:,oj] = np.add(self.weigths[:,oj],np.linalg.solve(self.tempMatrix[:,:,oj],self.tempVector[:,oj]))
 
     def run(self,input):
         return np.dot(input,self.weigths)

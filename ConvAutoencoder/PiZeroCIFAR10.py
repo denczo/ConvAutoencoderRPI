@@ -1,6 +1,5 @@
-from ConvAutoencoder.ConvLayerViz import ConvLayerViz
+from ConvAutoencoder.ConvLayerViz import ConvLayer
 from ConvAutoencoder.LinearSystem import LinearSystem
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 
@@ -28,64 +27,38 @@ cifar = cifar.reshape(10000,3072)
 cifarN = np.zeros((10000,3072))
 for i in range(10000):
     cifarN[i] = (cifar[i] / 255.0 * 0.99) + 0.01
-
 cifar = cifarN
-
-#single_img_reshaped = np.transpose(np.reshape(np.array(cifar[0]),(3, 32,32)), (1,2,0))
-#single_img = cifar[5].reshape(3,32,32).transpose([1,2,0]).flatten()
 
 prevLayer = []
 #=== 3 LAYER CONVOLUTIONAL AUTOENCODER INITIALIZATION ===
 print("Started feature learning ...")
 start = time.time()
 #input, channels, filterSize, filterAmount, stride, learnRate
-#0.0000001
-CL1 = ConvLayerViz(cifar[0],3, 9, 5, 2, 0.005)
-CL2 = ConvLayerViz(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 6, 2, 0.0005)
-CL3 = ConvLayerViz(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 7, 2, 0.00005)
+CL1 = ConvLayer(cifar[0],3, 9, 5, 2, 0.005)
+CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 6, 2, 0.0005)
+CL3 = ConvLayer(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 7, 2, 0.00005)
 
-epochs = 25
-errorL1 = []
-errorL2 = []
-errorL3 = []
+epochs = 50
 
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-for epoch in range(epochs):
+for epoch in range(1):
     CL1.trainConvLayer(prevLayer,CL1,100,cifar)
-    errorL1.append(np.square(np.subtract(CL1.input, CL1.reconstrInput)).mean())
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-for epoch in range(epochs):
+for epoch in range(5):
     CL2.trainConvLayer(prevLayer,CL2,100,cifar)
-    errorL2.append(np.square(np.subtract(CL2.input, CL2.reconstrInput)).mean())
 prevLayer.append(CL2)
 CL3.setBiasVisible(1)
 CL3.setBiasesFMs(np.full(CL3.filterAmount,1))
 for epoch in range(epochs):
     CL3.trainConvLayer(prevLayer,CL3,100,cifar)
-    errorL3.append(np.square(np.subtract(CL3.input, CL3.reconstrInput)).mean())
 prevLayer.append(CL3)
 
-plt.plot(errorL1,label="erste Schicht")
-plt.plot(errorL2,label="zweite Schicht")
-#plt.plot(errorL3,label="dritte Schicht")
-plt.xlabel('Epochen')
-plt.ylabel('Mittlere Quadratische Fehler')
-plt.legend()
-plt.show()
 
 end = time.time()
 print("Finished feature learning: ",round(end-start,2),"s")
-
-
-#CL2.guidedBackwardsActivation(CL2.featureMaps.reshape(CL2.filterAmount,CL2.fStepsOneAxis**2),16)
-#temp = CL2.reconstrInput.reshape(CL1.fStepsOneAxis,CL1.fStepsOneAxis,CL1.filterAmount).transpose(2,0,1)
-#CL1.guidedBackwardsActivation(temp.reshape(CL1.filterAmount,CL1.fStepsOneAxis**2),2)
-#Viz = vizLayer(CL1, 5, 9, 0)
-#Viz.setInputs(CL1.input,CL1.filter,CL1.featureMaps.flatten(),CL1.reconstrInput,CL1.channels)
-#Viz.visualizeFeatures(CL1.reconstrInput,True)
 
 #=== TRAINING ===
 

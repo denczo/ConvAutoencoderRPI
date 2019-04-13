@@ -3,6 +3,7 @@ from ConvAutoencoder.LinearSystem import LinearSystem
 import numpy as np
 import time
 from os.path import dirname, realpath
+import matplotlib.pyplot as plt
 
 filepath = realpath(__file__)
 dirOfFile = dirname(filepath)
@@ -21,36 +22,52 @@ test_data_file.close()
 
 prevLayer = []
 dataTestLength = len(dataTest)
-#dataLength = len(data)
+dataLength = len(data)
 testBatch = np.zeros((dataTestLength,784))
 testTargets = np.zeros((dataTestLength,10)) + 0.01
-dataBatch = np.zeros((dataTestLength,784))
-targets = np.zeros((dataTestLength,10)) + 0.01
+dataBatch = np.zeros((dataLength,784))
+targets = np.zeros((dataLength,10)) + 0.01
 
 #MNIST traing & test data with targets
-for i in range(dataTestLength):
+for i in range(dataLength):
     oneDigit = data[i % dataTestLength].split(',')
-    oneDigitTest = dataTest[i % dataTestLength].split(',')
     temp = (np.asfarray(oneDigit[1:]) / 255.0 * 0.99) + 0.01
-    tempTest = (np.asfarray(oneDigitTest[1:]) / 255.0 * 0.99) + 0.01
     dataBatch[i] = temp
     targets[i,int(oneDigit[0])] = 0.99
-    testBatch[i] = tempTest
-    testTargets[i, int(oneDigitTest[0])] = 0.99
+    if i < dataTestLength:
+        oneDigitTest = dataTest[i % dataTestLength].split(',')
+        tempTest = (np.asfarray(oneDigitTest[1:]) / 255.0 * 0.99) + 0.01
+        testBatch[i] = tempTest
+        testTargets[i, int(oneDigitTest[0])] = 0.99
 
 #=== 2 LAYER CONVOLUTIONAL AUTOENCODER INITIALIZATION ===
 print("Started feature learning ...")
+epochs = 10
 start = time.time()
 #input, channels, filterSize, filterAmount, stride, learnRate
 CL1 = ConvLayerViz(dataBatch[0], 1, 9, 4, 3, 0.05)
 CL2 = ConvLayerViz(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 14, 3, 0.005)
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-CL1.trainConvLayer(prevLayer,CL1,100,dataBatch)
+errorL1 = []
+for epoch in range(1):
+    CL1.trainConvLayer(prevLayer,CL1,100,dataBatch)
+    errorL1.append(np.square(np.subtract(CL1.input, CL1.reconstrInput)).mean(axis=None))
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-CL2.trainConvLayer(prevLayer,CL2,1000,dataBatch)
+errorL2 = []
+for epoch in range(epochs):
+    CL2.trainConvLayer(prevLayer,CL2,100,dataBatch)
+    errorL2.append(np.square(np.subtract(CL2.input, CL2.reconstrInput)).mean(axis=None))
+
+plt.plot(errorL1,label="erste Schicht")
+plt.plot(errorL2,label="zweite Schicht")
+plt.xlabel('Epochen')
+plt.ylabel('Mittlere Quadratische Fehler')
+plt.legend()
+plt.show()
+
 prevLayer.append(CL2)
 end = time.time()
 print("Finished feature learning: ",round(end-start,2),"s")
@@ -65,7 +82,7 @@ print("Finished feature learning: ",round(end-start,2),"s")
 #=== TRAINING ===
 ls = LinearSystem(len(CL2.featureMaps.flatten()),10)
 print("Started training ...")
-for i in range(1000):
+for i in range(8000):
     CL1.updateInput(dataBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
@@ -83,7 +100,7 @@ print("Duration entire training: ",round(end-start,2),"s")
 #=== TEST ===
 falsePredicted = 0
 print("Started test ...")
-for i in range(dataTestLength):
+for i in range(2000):
     CL1.updateInput(testBatch[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
