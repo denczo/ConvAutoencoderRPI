@@ -38,22 +38,18 @@ CL1 = ConvLayer(cifar[0],3, 9, 5, 2, 0.005)
 CL2 = ConvLayer(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 6, 2, 0.0005)
 CL3 = ConvLayer(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 7, 2, 0.00005)
 
-epochs = 50
 
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-for epoch in range(1):
-    CL1.trainConvLayer(prevLayer,CL1,100,cifar)
+CL1.trainConvLayer(prevLayer,CL1,100,cifar)
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-for epoch in range(5):
-    CL2.trainConvLayer(prevLayer,CL2,100,cifar)
+CL2.trainConvLayer(prevLayer,CL2,250,cifar)
 prevLayer.append(CL2)
 CL3.setBiasVisible(1)
 CL3.setBiasesFMs(np.full(CL3.filterAmount,1))
-for epoch in range(epochs):
-    CL3.trainConvLayer(prevLayer,CL3,100,cifar)
+CL3.trainConvLayer(prevLayer,CL3,1000,cifar)
 prevLayer.append(CL3)
 
 

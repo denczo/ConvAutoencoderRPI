@@ -3,6 +3,10 @@ from ConvAutoencoder.LinearSystem import LinearSystem
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+from sklearn.metrics import confusion_matrix
+import seaborn as sn
+import pandas as pd
+
 
 def unpickle(file):
     import pickle
@@ -18,9 +22,20 @@ def createTargets(labels):
     return targets
 
 cifar = unpickle("C:/Users/Dennis/Documents/studium/cifar-10-batches-py/data_batch_1")
+cifarLabelNames = unpickle("C:/Users/Dennis/Documents/studium/cifar-10-batches-py/batches.meta")
 cifarLabels = cifar[b'labels']
+print(cifarLabelNames)
+cifarTest = unpickle("C:/Users/Dennis/Documents/studium/cifar-10-batches-py/test_batch")
+cifarTest = cifarTest[b'data']
+cifarLabelNames = cifarLabelNames[b'label_names']
+print(cifarLabelNames)
+print(cifarLabels)
+print(cifarLabelNames[0].decode('utf-8'))
+print(len(cifarLabelNames))
 cifar = cifar[b'data']
 cifarTargets = createTargets(cifarLabels)
+cifarTest = cifarTest.reshape(10000,3,32,32).transpose([0,2,3,1])
+cifarTest = cifarTest.reshape(10000,3072)
 cifar = cifar.reshape(10000,3,32,32).transpose([0,2,3,1])
 cifar = cifar.reshape(10000,3072)
 
@@ -38,60 +53,52 @@ prevLayer = []
 #=== 3 LAYER CONVOLUTIONAL AUTOENCODER INITIALIZATION ===
 print("Started feature learning ...")
 start = time.time()
+iterations = 10000
 #input, channels, filterSize, filterAmount, stride, learnRate
 #0.0000001
 CL1 = ConvLayerViz(cifar[0],3, 9, 5, 2, 0.005)
 CL2 = ConvLayerViz(CL1.featureMaps.flatten(),CL1.filterAmount, 9, 6, 2, 0.0005)
 CL3 = ConvLayerViz(CL2.featureMaps.flatten(),CL2.filterAmount, 9, 7, 2, 0.00005)
 
-epochs = 25
-errorL1 = []
-errorL2 = []
-errorL3 = []
-
 CL1.setBiasVisible(1)
 CL1.setBiasesFMs(np.full(CL1.filterAmount,1))
-for epoch in range(epochs):
-    CL1.trainConvLayer(prevLayer,CL1,100,cifar)
-    errorL1.append(np.square(np.subtract(CL1.input, CL1.reconstrInput)).mean())
+CL1.trainConvLayer(prevLayer,CL1,50,cifar)
 prevLayer.append(CL1)
 CL2.setBiasVisible(1)
 CL2.setBiasesFMs(np.full(CL2.filterAmount,1))
-for epoch in range(epochs):
-    CL2.trainConvLayer(prevLayer,CL2,100,cifar)
-    errorL2.append(np.square(np.subtract(CL2.input, CL2.reconstrInput)).mean())
+CL2.trainConvLayer(prevLayer,CL2,250,cifar)
 prevLayer.append(CL2)
 CL3.setBiasVisible(1)
 CL3.setBiasesFMs(np.full(CL3.filterAmount,1))
-for epoch in range(epochs):
-    CL3.trainConvLayer(prevLayer,CL3,100,cifar)
-    errorL3.append(np.square(np.subtract(CL3.input, CL3.reconstrInput)).mean())
+CL3.trainConvLayer(prevLayer,CL3,1200,cifar)
 prevLayer.append(CL3)
 
+#CONFUSION MATRIX
+"""
+x = np.arange(iterations)
+p = sp.polyfit(x, CL1.error, deg=10)
+errorL1 = sp.polyval(p, x)
+p = sp.polyfit(x, CL2.error, deg=15)
+errorL2 = sp.polyval(p, x)
+p = sp.polyfit(x, CL3.error, deg=15)
+errorL3 = sp.polyval(p, x)
+
 plt.plot(errorL1,label="erste Schicht")
-plt.plot(errorL2,label="zweite Schicht")
-#plt.plot(errorL3,label="dritte Schicht")
-plt.xlabel('Epochen')
+plt.plot(errorL2,label="zweite Schicht",linestyle='dashed')
+plt.plot(errorL3,label="dritte Schicht",linestyle='dotted')
+plt.xlabel('Trainingsmuster (CIFAR-10)')
 plt.ylabel('Mittlere Quadratische Fehler')
 plt.legend()
 plt.show()
-
+"""
 end = time.time()
 print("Finished feature learning: ",round(end-start,2),"s")
-
-
-#CL2.guidedBackwardsActivation(CL2.featureMaps.reshape(CL2.filterAmount,CL2.fStepsOneAxis**2),16)
-#temp = CL2.reconstrInput.reshape(CL1.fStepsOneAxis,CL1.fStepsOneAxis,CL1.filterAmount).transpose(2,0,1)
-#CL1.guidedBackwardsActivation(temp.reshape(CL1.filterAmount,CL1.fStepsOneAxis**2),2)
-#Viz = vizLayer(CL1, 5, 9, 0)
-#Viz.setInputs(CL1.input,CL1.filter,CL1.featureMaps.flatten(),CL1.reconstrInput,CL1.channels)
-#Viz.visualizeFeatures(CL1.reconstrInput,True)
 
 #=== TRAINING ===
 
 ls = LinearSystem(len(CL3.featureMaps.flatten()),10)
 print("Started dense-layer training ...")
-for i in range(8000):
+for i in range(10000):
     CL1.updateInput(cifar[i])
     CL1.slide(False)
     CL2.updateInput(CL1.featureMaps.flatten())
@@ -108,9 +115,12 @@ print("Finished training: ",round(end-oldEnd,2),"s")
 print("Duration entire training: ",round(end-start,2),"s")
 
 #=== TEST ===
+
+y_actu = []
+y_pred = []
 falsePredicted = 0
 print("Started test ...")
-iterations = 2000
+iterations = 10000
 for i in range(iterations):
     CL1.updateInput(cifar[i])
     CL1.slide(False)
@@ -119,12 +129,28 @@ for i in range(iterations):
     CL3.updateInput(CL2.featureMaps.flatten())
     CL3.slide(False)
 
-    temp = np.argmax(cifarTargets[i,:])
+    #temp = np.argmax(cifarTargets[i,:])
+    temp = cifarLabels[i]
+
     result = np.argmax(ls.run(CL3.featureMaps.flatten()))
     if result != temp:
         falsePredicted += 1
-
+    y_actu.append(cifarLabelNames[temp].decode('utf-8'))
+    y_pred.append(cifarLabelNames[result].decode('utf-8'))
 correct = iterations - falsePredicted
 temp = correct/iterations*100
 
 print("correct predicted: ",temp,"%")
+
+#plt.figure(figsize = (12,12))
+
+#names = [x.decode('utf-8') for x in cifarLabelNames]
+
+#df_cm = pd.DataFrame(confusion_matrix(y_actu, y_pred), names, names)
+#sn.set(font_scale=1.4)#for label size
+#sn.heatmap(df_cm, annot=True,annot_kws={"size": 12},cmap=sn.cm.rocket_r,fmt="d",square=True)# font size
+#sn.cubehelix_palette(8,reverse=True)
+#plt.xlabel("vorhergesagt")
+#plt.ylabel("tatsächlich")
+#plt.savefig("C:/Users/Dennis/Documents/studium/confMatrix.png")
+#plt.show()

@@ -99,20 +99,5 @@ class Viz:
         if stop:
             plt.show()
 
-    def visualizeFeatures(self,reconstr,stop):
-        self.fig.clear()
-        self.showInput(self.input, Viz.rowInput)
-        self.showInput(reconstr, Viz.rowFilter)
-        plt.draw()
-        plt.pause(0.0001)
-        if stop:
-            plt.show()
-
-    def plotError(self,error):
-        plt.plot(error)
-        plt.xlabel('Epochen')
-        plt.ylabel('Fehler')
-        plt.show()
-
     def endViz(self):
         plt.close()
