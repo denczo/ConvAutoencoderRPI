@@ -10,6 +10,6 @@ second convolutional layer:
 <img src="https://i.imgur.com/kjdb4N6.png" height="200" > 
 
 convolution matrix:  
-<img src="https://i.imgur.com/3I9pklO.png" height="500" > 
+<img src="https://i.imgur.com/VSOsEce.png" height="500" > 
 
 accuracy: 86%
