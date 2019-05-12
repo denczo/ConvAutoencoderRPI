@@ -1,7 +1,7 @@
 # ConvolutionalAutoEncoder
 Convolutional Autoencoder as part of a bachelor thesis
 
-Test with MNIST
+### Test with MNIST
 
 first convolutional layer:  
 <img src="https://i.imgur.com/yzW8UqT.png" height="200" > 
@@ -10,6 +10,6 @@ second convolutional layer:
 <img src="https://i.imgur.com/kjdb4N6.png" height="200" > 
 
 convolution matrix:  
-<img src="https://i.imgur.com/VSOsEce.png" height="500" > 
+<img src="https://i.imgur.com/VSOsEce.png" height="400" > 
 
 accuracy: 86%
