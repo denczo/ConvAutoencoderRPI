@@ -9,7 +9,7 @@ first convolutional layer:
 second convolutional layer:  
 <img src="https://i.imgur.com/kjdb4N6.png" height="200" > 
 
-convolution matrix:  
+confusion matrix:  
 <img src="https://i.imgur.com/VSOsEce.png" height="400" > 
 
 accuracy: 86%
