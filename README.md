@@ -37,5 +37,5 @@ _Training duration includes training of the convolutional layers (0.75 s)_
 | 1k            | 10k     | 178.64 s           | 80.6 %  |
 | 500           | 10k     | 104.25 s           | 74.79 %  |
 
-_Platform: Rasperry Zero   
+_Platform: Rasperry Zero_   
 _Training duration includes training of the convolutional layers (31.61 s)_
